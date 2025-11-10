@@ -1,0 +1,283 @@
+package calculatorapp; 
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.*;
+import java.text.DecimalFormat;
+
+public class ScientificCalculator extends JFrame implements ActionListener {
+
+    private JTextField display;
+    private double num1 = 0, num2 = 0, result = 0;
+    private String operator = "";
+    private boolean startNewNumber = true;
+    private boolean powerOn = true;
+
+    private final DecimalFormat df = new DecimalFormat("0.##########");
+
+    public ScientificCalculator() {
+        // Frame setup
+        setTitle("Scientific Calculator");
+        setSize(420, 630);
+        setLocationRelativeTo(null);
+        setDefaultCloseOperation(EXIT_ON_CLOSE);
+        setResizable(false);
+
+        // Display setup
+        display = new JTextField("0");
+        display.setEditable(false);
+        display.setHorizontalAlignment(JTextField.RIGHT);
+        display.setFont(new Font("Arial", Font.BOLD, 28));
+        display.setBackground(Color.WHITE);
+
+        // Button panel
+        JPanel buttonPanel = new JPanel(new GridLayout(8, 5, 5, 5));
+        buttonPanel.setBackground(Color.DARK_GRAY);
+
+        String[] buttons = {
+            "ON", "OFF", "C", "←", "",
+            "7", "8", "9", "/", "√",
+            "4", "5", "6", "*", "x²",
+            "1", "2", "3", "-", "x³",
+            "0", ".", "=", "+", "1/x",
+            "sin", "cos", "tan", "log", "ln",
+            "π", "e", "(", ")", ""
+        };
+
+        for (String text : buttons) {
+            JButton button = new JButton(text);
+            button.setFont(new Font("Arial", Font.BOLD, 18));
+
+            if (text.equals("ON") || text.equals("OFF"))
+                button.setBackground(Color.ORANGE);
+            else if (text.equals("C") || text.equals("←"))
+                button.setBackground(Color.PINK);
+            else
+                button.setBackground(Color.LIGHT_GRAY);
+
+            button.addActionListener(this);
+            buttonPanel.add(button);
+        }
+
+        add(display, BorderLayout.NORTH);
+        add(buttonPanel, BorderLayout.CENTER);
+
+        // ✅ Keyboard Listener
+        addKeyListener(new KeyAdapter() {
+            @Override
+            public void keyPressed(KeyEvent e) {
+                if (!powerOn) return; // ignore if OFF
+
+                char key = e.getKeyChar();
+                int keyCode = e.getKeyCode();
+
+                // ✅ Handle Backspace key
+                if (keyCode == KeyEvent.VK_BACK_SPACE) {
+                    backspace();
+                    return;
+                }
+
+                if (Character.isDigit(key) || key == '.') {
+                    if (startNewNumber) {
+                        display.setText("" + key);
+                        startNewNumber = false;
+                    } else {
+                        display.setText(display.getText() + key);
+                    }
+                } else {
+                    switch (key) {
+                        case '+':
+                        case '-':
+                        case '*':
+                        case '/':
+                            num1 = Double.parseDouble(display.getText());
+                            operator = String.valueOf(key);
+                            startNewNumber = true;
+                            break;
+                        case '=':
+                        case '\n': // Enter key
+                            performCalculation();
+                            break;
+                        case 'c':
+                        case 'C':
+                            clear();
+                            break;
+                    }
+                }
+            }
+        });
+
+        setFocusable(true);
+        requestFocusInWindow();
+    }
+
+    @Override
+    public void actionPerformed(ActionEvent e) {
+        String command = e.getActionCommand();
+
+        // Power ON/OFF
+        if (command.equals("ON")) {
+            powerOn = true;
+            display.setText("0");
+            display.setEnabled(true);
+            return;
+        }
+        if (command.equals("OFF")) {
+            powerOn = false;
+            display.setText("");
+            display.setEnabled(false);
+            return;
+        }
+
+        if (!powerOn) return; // ignore all when OFF
+
+        try {
+            switch (command) {
+                // Digits and decimal
+                case "0": case "1": case "2": case "3": case "4":
+                case "5": case "6": case "7": case "8": case "9": case ".":
+                    if (startNewNumber) {
+                        display.setText(command.equals(".") ? "0." : command);
+                        startNewNumber = false;
+                    } else {
+                        display.setText(display.getText() + command);
+                    }
+                    break;
+
+                // Operators
+                case "+": case "-": case "*": case "/":
+                    num1 = Double.parseDouble(display.getText());
+                    operator = command;
+                    startNewNumber = true;
+                    break;
+
+                case "=":
+                    performCalculation();
+                    break;
+
+                // Scientific operations
+                case "√":
+                    result = Math.sqrt(Double.parseDouble(display.getText()));
+                    display.setText(df.format(result));
+                    startNewNumber = true;
+                    break;
+
+                case "x²":
+                    result = Math.pow(Double.parseDouble(display.getText()), 2);
+                    display.setText(df.format(result));
+                    startNewNumber = true;
+                    break;
+
+                case "x³":
+                    result = Math.pow(Double.parseDouble(display.getText()), 3);
+                    display.setText(df.format(result));
+                    startNewNumber = true;
+                    break;
+
+                case "1/x":
+                    double val = Double.parseDouble(display.getText());
+                    result = (val == 0) ? Double.NaN : 1 / val;
+                    display.setText(df.format(result));
+                    startNewNumber = true;
+                    break;
+
+                case "sin":
+                    result = Math.sin(Math.toRadians(Double.parseDouble(display.getText())));
+                    display.setText(df.format(result));
+                    startNewNumber = true;
+                    break;
+
+                case "cos":
+                    result = Math.cos(Math.toRadians(Double.parseDouble(display.getText())));
+                    display.setText(df.format(result));
+                    startNewNumber = true;
+                    break;
+
+                case "tan":
+                    result = Math.tan(Math.toRadians(Double.parseDouble(display.getText())));
+                    display.setText(df.format(result));
+                    startNewNumber = true;
+                    break;
+
+                case "log":
+                    result = Math.log10(Double.parseDouble(display.getText()));
+                    display.setText(df.format(result));
+                    startNewNumber = true;
+                    break;
+
+                case "ln":
+                    result = Math.log(Double.parseDouble(display.getText()));
+                    display.setText(df.format(result));
+                    startNewNumber = true;
+                    break;
+
+                case "π":
+                    display.setText(df.format(Math.PI));
+                    startNewNumber = true;
+                    break;
+
+                case "e":
+                    display.setText(df.format(Math.E));
+                    startNewNumber = true;
+                    break;
+
+                case "C":
+                    clear();
+                    break;
+
+                case "←":
+                    backspace();
+                    break;
+
+                default:
+                    break;
+            }
+        } catch (Exception ex) {
+            display.setText("Error");
+            startNewNumber = true;
+        }
+
+        requestFocusInWindow(); // keep keyboard focus
+    }
+
+    // ✅ Perform arithmetic operations
+    private void performCalculation() {
+        num2 = Double.parseDouble(display.getText());
+        double resultValue = 0;
+
+        switch (operator) {
+            case "+": resultValue = num1 + num2; break;
+            case "-": resultValue = num1 - num2; break;
+            case "*": resultValue = num1 * num2; break;
+            case "/": resultValue = (num2 == 0) ? Double.NaN : num1 / num2; break;
+        }
+
+        display.setText(df.format(resultValue));
+        startNewNumber = true;
+    }
+
+    // ✅ Clear function
+    private void clear() {
+        display.setText("0");
+        num1 = num2 = result = 0;
+        operator = "";
+        startNewNumber = true;
+    }
+
+    // ✅ Backspace function
+    private void backspace() {
+        String current = display.getText();
+        if (!startNewNumber && current.length() > 0) {
+            display.setText(current.substring(0, current.length() - 1));
+            if (display.getText().isEmpty()) {
+                display.setText("0");
+                startNewNumber = true;
+            }
+        }
+    }
+
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(() -> {
+            new ScientificCalculator().setVisible(true);
+        });
+    }
+}
